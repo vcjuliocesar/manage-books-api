@@ -9,5 +9,5 @@ class BookService:
         self.repository = BookRepository()
         
     def create(self,book:BookSchema) -> Book:
-        print("Holaaaaaaaaaaaaaaa")
+        
         return self.repository.create(Book(**book.model_dump()))
