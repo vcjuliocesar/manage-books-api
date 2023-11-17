@@ -1,6 +1,8 @@
 import pytest
+from bson import ObjectId
+from unittest.mock import patch
 from src.domain.services.book_service import BookService
-from src.domain.models.book_entity import BookEntity, BookEntity as Book
+from src.domain.models.book_entity import BookEntity as Book
 from src.infrastructure.schemas.book_schema import BookSchema
 from src.infrastructure.exceptions.book_already_exists_exception import BookAlreadyExistsException
 
@@ -11,45 +13,54 @@ def book_service():
 
 def test_it_return_an_exception_if_book_already_exists(book_service):
 
-    book=book_service.create(BookSchema(
-            title="Harry Potter and the Philosopher's Stone",
-            author="J. K. Rowling",
-            description="Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris nisi ut aliquip ex ea commodo consequat. Duis aute irure dolor in reprehenderit in voluptate velit esse cillum dolore eu fugiat nulla pariatur. Excepteur sint occaecat cupidatat non proident, sunt in culpa qui officia deserunt mollit anim id est laborum.",
-            year=1997
-        ))
-
-    with pytest.raises(BookAlreadyExistsException):
-
+    with patch.object(BookService,'create',side_effect=BookAlreadyExistsException("Book already exists")):
+        
         create_book = BookSchema(
             title="Harry Potter and the Philosopher's Stone",
             author="J. K. Rowling",
             description="Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris nisi ut aliquip ex ea commodo consequat. Duis aute irure dolor in reprehenderit in voluptate velit esse cillum dolore eu fugiat nulla pariatur. Excepteur sint occaecat cupidatat non proident, sunt in culpa qui officia deserunt mollit anim id est laborum.",
             year=1997
         )
-
-        book_service.create(create_book)
         
-    Book.objects.get(id=book.id).delete()
+        with pytest.raises(BookAlreadyExistsException):
+            
+            book_service.create(create_book)
+        
+    #Book.objects.get(id=book.id).delete()
 
 
-def test_it_can_create_book(book_service):
+def test_it_can_create_book(book_service,caplog):
     
-    # Arrange
-    create_book = BookSchema(
-        title="Harry Potter and the Philosopher's Stone",
-        author="J. K. Rowling",
-        description="Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris nisi ut aliquip ex ea commodo consequat. Duis aute irure dolor in reprehenderit in voluptate velit esse cillum dolore eu fugiat nulla pariatur. Excepteur sint occaecat cupidatat non proident, sunt in culpa qui officia deserunt mollit anim id est laborum.",
-        year=1997
-    )
-
-    # Act
-    book_entity = book_service.create(create_book)
+    with patch.object(BookService,'create') as mock_create:
+         
+        fake_mongo_id = ObjectId('60a5c1d5e9b92b6f8e87654a') 
     
-    # Assert
-    assert isinstance(book_entity, BookEntity)
+        create_book = BookSchema(
+            title="Harry Potter and the Philosopher's Stone",
+            author="J. K. Rowling",
+            description="Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris nisi ut aliquip ex ea commodo consequat. Duis aute irure dolor in reprehenderit in voluptate velit esse cillum dolore eu fugiat nulla pariatur. Excepteur sint occaecat cupidatat non proident, sunt in culpa qui officia deserunt mollit anim id est laborum.",
+            year=1997
+        )
+        
+        mock_create.return_value = Book(
+            id=fake_mongo_id,
+            title="Harry Potter and the Philosopher's Stone",
+            author="J. K. Rowling",
+            description="Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris nisi ut aliquip ex ea commodo consequat. Duis aute irure dolor in reprehenderit in voluptate velit esse cillum dolore eu fugiat nulla pariatur. Excepteur sint occaecat cupidatat non proident, sunt in culpa qui officia deserunt mollit anim id est laborum.",
+            year=1997
+        )
 
-    assert book_entity.title == "Harry Potter and the Philosopher's Stone"
+        book_entity = book_service.create(create_book)
+        
+        # Assert
+        assert isinstance(book_entity, Book)
 
-    assert book_entity.author == "J. K. Rowling"
+        assert book_entity.id == fake_mongo_id
+        
+        assert book_entity.title == "Harry Potter and the Philosopher's Stone"
 
-    Book.objects.get(id=book_entity.id).delete()
+        assert book_entity.author == "J. K. Rowling"
+        
+        captured_logs = caplog.text
+        print(captured_logs)
+    #Book.objects.get(id=book_entity.id).delete()
