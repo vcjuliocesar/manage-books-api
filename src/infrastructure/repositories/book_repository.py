@@ -13,3 +13,7 @@ class BookRepository(BookInterface):
         book.save()
         
         return book
+    
+    def find_one(self,criteria: dict) -> Book:
+        
+        return Book.objects(**criteria).first()

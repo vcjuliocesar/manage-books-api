@@ -6,3 +6,7 @@ class BookInterface(ABC):
     @abstractmethod
     def create(self,book:Book) -> Book:
         pass
+    
+    @abstractmethod
+    def find_one(self,criteria:dict) -> Book:
+        pass
