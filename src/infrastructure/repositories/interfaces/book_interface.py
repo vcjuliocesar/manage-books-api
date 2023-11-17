@@ -10,3 +10,7 @@ class BookInterface(ABC):
     @abstractmethod
     def find_one(self,criteria:dict) -> Book:
         pass
+    
+    @abstractmethod
+    def update(self,book:Book) -> Book:
+        pass

@@ -17,3 +17,7 @@ class BookRepository(BookInterface):
     def find_one(self,criteria: dict) -> Book:
         
         return Book.objects(**criteria).first()
+    
+    def update(self,book:Book) -> Book:
+        
+        return self.create(book)
