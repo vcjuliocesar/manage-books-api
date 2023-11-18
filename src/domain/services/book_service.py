@@ -1,3 +1,4 @@
+from bson import ObjectId
 from src.infrastructure.repositories.book_repository import BookRepository
 from src.infrastructure.schemas.book_schema import BookSchema
 from src.infrastructure.exceptions.book_already_exists_exception import BookAlreadyExistsException
@@ -24,9 +25,19 @@ class BookService:
         
         return self.repository.find_one(criteria)
     
+    def find_by_id(self,id_book:ObjectId) -> Book:
+        
+        book = self.repository.find_by_id(id_book)
+        
+        if not book:
+            
+            raise BookNotFoundException()
+        
+        return book
+    
     def update(self,new_book:BookSchema) -> Book:
         
-        book = self.repository.find_one({"id":new_book.id})
+        book = self.find_by_id(new_book.id)
         
         if not book:
             
@@ -42,3 +53,10 @@ class BookService:
         
         return self.repository.update(book)
         
+    def delete(self,book:Book) -> None:
+        
+        if not self.find_by_id(book.id):
+            
+            raise BookNotFoundException()
+        
+        return self.repository.delete(book)
