@@ -63,4 +63,10 @@ class BookService:
     
     def get_all(self) -> list[Book]:
         
-        return self.repository.get_all()
+        books = self.repository.get_all()
+        
+        if len(books) == 0:
+            
+            raise BookNotFoundException()
+            
+        return books

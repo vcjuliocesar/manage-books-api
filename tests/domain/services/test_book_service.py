@@ -192,6 +192,14 @@ def test_it_can_retun_all_books(book_service):
             )
         ]
         
+        mock_get_all.side_effect = BookNotFoundException("Book not found")
+        
+        with pytest.raises(BookNotFoundException):
+
+            book_service.get_all()
+
+        mock_get_all.side_effect = None
+        
         all_books = book_service.get_all()
         
         assert isinstance(all_books,list)
