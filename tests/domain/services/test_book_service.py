@@ -166,3 +166,43 @@ def test_it_can_find_book_by_id(book_service):
         assert found_book.description == "Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris nisi ut aliquip ex ea commodo consequat. Duis aute irure dolor in reprehenderit in voluptate velit esse cillum dolore eu fugiat nulla pariatur. Excepteur sint occaecat cupidatat non proident, sunt in culpa qui officia deserunt mollit anim id est laborum."
         
         assert found_book.year == 1997
+
+def test_it_can_retun_all_books(book_service):
+    
+    with patch.object(BookService,"get_all") as mock_get_all:
+        
+        fake_mongo_id = ObjectId('60a5c1d5e9b92b6f8e87654a')
+        
+        fake_mongo_id_2 = ObjectId('619bf4b6c2f13a5e0c956b5c')
+        
+        mock_get_all.return_value = [
+            Book(
+                id=fake_mongo_id,
+                title="Harry Potter and the Philosopher's Stone",
+                author="J. K. Rowling",
+                description="Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris nisi ut aliquip ex ea commodo consequat. Duis aute irure dolor in reprehenderit in voluptate velit esse cillum dolore eu fugiat nulla pariatur. Excepteur sint occaecat cupidatat non proident, sunt in culpa qui officia deserunt mollit anim id est laborum.",
+                year=1997
+            ),
+            Book(
+                id=fake_mongo_id_2,
+                title="Harry Potter and the Chamber of Secrets",
+                author="J. K. Rowling",
+                description="Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris nisi ut aliquip ex ea commodo consequat. Duis aute irure dolor in reprehenderit in voluptate velit esse cillum dolore eu fugiat nulla pariatur. Excepteur sint occaecat cupidatat non proident, sunt in culpa qui officia deserunt mollit anim id est laborum.",
+                year=1999
+            )
+        ]
+        
+        all_books = book_service.get_all()
+        
+        assert isinstance(all_books,list)
+        assert len(all_books) == 2
+        
+        assert all_books[0].id == fake_mongo_id
+        assert all_books[0].title == "Harry Potter and the Philosopher's Stone"
+        assert all_books[0].author == "J. K. Rowling"
+        assert all_books[0].year ==  1997
+        
+        assert all_books[1].id == fake_mongo_id_2
+        assert all_books[1].title == "Harry Potter and the Chamber of Secrets"
+        assert all_books[1].author == "J. K. Rowling"
+        assert all_books[1].year ==  1999

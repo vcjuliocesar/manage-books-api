@@ -23,3 +23,7 @@ class BookInterface(ABC):
     @abstractmethod
     def delete(self,book:Book) -> None:
         pass
+    
+    @abstractmethod
+    def get_all(self) -> list[Book]:
+        pass

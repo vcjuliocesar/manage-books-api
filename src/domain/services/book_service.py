@@ -60,3 +60,7 @@ class BookService:
             raise BookNotFoundException()
         
         return self.repository.delete(book)
+    
+    def get_all(self) -> list[Book]:
+        
+        return self.repository.get_all()
