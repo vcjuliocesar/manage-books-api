@@ -7,14 +7,15 @@ from src.infrastructure.schemas.book_schema import BookSchema
 from src.infrastructure.exceptions.book_already_exists_exception import BookAlreadyExistsException
 from src.infrastructure.exceptions.book_not_found_exception import BookNotFoundException
 
-
+#Actúa como un proveedor de datos o recursos para las pruebas.
 @pytest.fixture
 def book_service():
     return BookService()
 
 
 def test_it_return_an_exception_if_book_already_exists(book_service):
-
+    #patch.object:prepara método 'create' del objeto book_service
+    #side_effect: se usa para definir el efecto secundario que ocurrirá cuando se llame al método create parcheado.
     with patch.object(BookService, 'create', side_effect=BookAlreadyExistsException("Book already exists")):
 
         create_book = BookSchema(
@@ -27,8 +28,6 @@ def test_it_return_an_exception_if_book_already_exists(book_service):
         with pytest.raises(BookAlreadyExistsException):
 
             book_service.create(create_book)
-
-    # Book.objects.get(id=book.id).delete()
 
 
 def test_it_can_create_book(book_service, caplog):
@@ -43,7 +42,8 @@ def test_it_can_create_book(book_service, caplog):
             description="Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris nisi ut aliquip ex ea commodo consequat. Duis aute irure dolor in reprehenderit in voluptate velit esse cillum dolore eu fugiat nulla pariatur. Excepteur sint occaecat cupidatat non proident, sunt in culpa qui officia deserunt mollit anim id est laborum.",
             year=1997
         )
-
+        #Se establece para simular el comportamiento del método create parcheado. 
+        #En este caso, cuando se llama a create, devuelve un objeto Book creado con valores específicos.
         mock_create.return_value = Book(
             id=fake_mongo_id,
             title="Harry Potter and the Philosopher's Stone",
@@ -65,7 +65,7 @@ def test_it_can_create_book(book_service, caplog):
 
         captured_logs = caplog.text
         print(captured_logs)
-    # Book.objects.get(id=book_entity.id).delete()
+    
 
 def test_it_can_update_book(book_service):
 
@@ -95,7 +95,7 @@ def test_it_can_update_book(book_service):
 
             book_service.update(update_book)
         
-        mock_update.side_effect = None
+        mock_update.side_effect = None #hace un reset al efecto secundario
 
         book_entity = book_service.update(update_book)
 
