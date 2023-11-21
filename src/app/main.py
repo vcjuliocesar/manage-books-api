@@ -1,11 +1,9 @@
 from fastapi import FastAPI
-from src.infrastructure.configs.database import db_connect
+from src.domain.models.base_entity import init
 from mongoengine import Document, StringField
 
 
 app = FastAPI()
-
-db_connect()
 
 class MiModelo(Document):
     nombre = StringField(required=True)
@@ -23,3 +21,5 @@ async def read_data():
     # Consultar datos en la colección
     objetos = MiModelo.objects().all()
     return {"message": "Datos consultados", "data": objetos}
+
+init()
