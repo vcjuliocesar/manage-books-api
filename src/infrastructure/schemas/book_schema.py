@@ -1,6 +1,7 @@
+from bson import ObjectId
 from pydantic import BaseModel,Field
 from typing import Optional
-from bson.objectid import ObjectId as BsonObjectId
+from src.infrastructure.configs.oid import OID
 
 class BookPostRequest(BaseModel):
     
@@ -14,12 +15,12 @@ class BookPostRequest(BaseModel):
     
 class BookSchema(BookPostRequest):
     
-    id:Optional[BsonObjectId] = Field(default=None,alias="_id")
+    id:Optional[OID] = Field(default=None,alias="_id")
     
     class Config:
-        
-        populate_by_field_name = True #permite que se usen campos alternativos al crear instancias de la clase
-        arbitrary_types_allowed = True #permite que se usen campos alternativos al crear instancias de la clase
+        allow_population_by_field_name = True
+        #populate_by_field_name = True #permite que se usen campos alternativos al crear instancias de la clase
+        #arbitrary_types_allowed = True #permite que se usen campos alternativos al crear instancias de la clase
         json_encoders = { #asegurar que los ObjectId se serialicen correctamente a texto cuando se convierten a JSON.
-            BsonObjectId: lambda v: str(v)
+            ObjectId: lambda oid: str(oid)
         }
