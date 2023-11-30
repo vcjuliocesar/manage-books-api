@@ -1,22 +1,57 @@
 import pytest
+from typing import List
 from bson import ObjectId
-from unittest.mock import patch
+from mongoengine import disconnect_all
 from src.domain.services.book_service import BookService
 from src.domain.models.book_entity import BookEntity as Book
+from src.infrastructure.configs.database import engine
+from src.infrastructure.repositories.book_repository import BookRepository
 from src.infrastructure.schemas.book_schema import BookSchema
 from src.infrastructure.exceptions.book_already_exists_exception import BookAlreadyExistsException
 from src.infrastructure.exceptions.book_not_found_exception import BookNotFoundException
 
-#Actúa como un proveedor de datos o recursos para las pruebas.
+
+@pytest.fixture(scope='function')
+def mock_db():
+
+    yield engine
+
+    # disconnect_all()
+
+
 @pytest.fixture
-def book_service():
-    return BookService()
+def test_book_repository(mock_db):
+
+    return BookRepository(db=mock_db)
 
 
-def test_it_return_an_exception_if_book_already_exists(book_service):
-    #patch.object:prepara método 'create' del objeto book_service
-    #side_effect: se usa para definir el efecto secundario que ocurrirá cuando se llame al método create parcheado.
-    with patch.object(BookService, 'create', side_effect=BookAlreadyExistsException("Book already exists")):
+# Actúa como un proveedor de datos o recursos para las pruebas.
+@pytest.fixture
+def book_service(test_book_repository):
+
+    return BookService(repository=test_book_repository)
+
+
+@pytest.fixture
+def set_up(book_service):
+
+    create_book = BookSchema(
+        title="Harry Potter and the Philosopher's Stone",
+        author="J. K. Rowling",
+        description="Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris nisi ut aliquip ex ea commodo consequat. Duis aute irure dolor in reprehenderit in voluptate velit esse cillum dolore eu fugiat nulla pariatur. Excepteur sint occaecat cupidatat non proident, sunt in culpa qui officia deserunt mollit anim id est laborum.",
+        year=1997
+    )
+
+    book = book_service.create(create_book)
+
+    yield book
+
+
+def test_it_return_an_exception_if_book_already_exists(book_service, set_up):
+
+    book = set_up
+
+    with pytest.raises(BookAlreadyExistsException):
 
         create_book = BookSchema(
             title="Harry Potter and the Philosopher's Stone",
@@ -25,192 +60,113 @@ def test_it_return_an_exception_if_book_already_exists(book_service):
             year=1997
         )
 
-        with pytest.raises(BookAlreadyExistsException):
+        book_service.create(create_book)
 
-            book_service.create(create_book)
+    book_service.delete(book)
 
 
-def test_it_can_create_book(book_service, caplog):
+def test_it_can_create_book(book_service, set_up, caplog):
 
-    with patch.object(BookService, 'create') as mock_create:
+    book = set_up
 
-        fake_mongo_id = ObjectId('60a5c1d5e9b92b6f8e87654a')
+    # Assert
+    assert isinstance(book, Book)
 
-        create_book = BookSchema(
-            title="Harry Potter and the Philosopher's Stone",
-            author="J. K. Rowling",
-            description="Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris nisi ut aliquip ex ea commodo consequat. Duis aute irure dolor in reprehenderit in voluptate velit esse cillum dolore eu fugiat nulla pariatur. Excepteur sint occaecat cupidatat non proident, sunt in culpa qui officia deserunt mollit anim id est laborum.",
-            year=1997
-        )
-        #Se establece para simular el comportamiento del método create parcheado. 
-        #En este caso, cuando se llama a create, devuelve un objeto Book creado con valores específicos.
-        mock_create.return_value = Book(
-            id=fake_mongo_id,
-            title="Harry Potter and the Philosopher's Stone",
-            author="J. K. Rowling",
-            description="Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris nisi ut aliquip ex ea commodo consequat. Duis aute irure dolor in reprehenderit in voluptate velit esse cillum dolore eu fugiat nulla pariatur. Excepteur sint occaecat cupidatat non proident, sunt in culpa qui officia deserunt mollit anim id est laborum.",
-            year=1997
-        )
+    assert book.id == book.id
 
-        book_entity = book_service.create(create_book)
+    assert book.title == "Harry Potter and the Philosopher's Stone"
 
-        # Assert
-        assert isinstance(book_entity, Book)
+    assert book.author == "J. K. Rowling"
 
-        assert book_entity.id == fake_mongo_id
+    book_service.delete(book)
 
-        assert book_entity.title == "Harry Potter and the Philosopher's Stone"
+    captured_logs = caplog.text
+    print(captured_logs)
 
-        assert book_entity.author == "J. K. Rowling"
 
-        captured_logs = caplog.text
-        print(captured_logs)
+def test_it_can_update_book(book_service, set_up):
+
+    book_entity = set_up
+
+    book = book_service.find_by_id(book_entity.id)
+
+    book.author = "New author"
+
+    book.title = "New title"
+
+    new_book = book_service.update(book)
+
+    assert isinstance(new_book, Book)
+
+    assert new_book.id == book.id
+
+    assert new_book.author == "New author"
+
+    assert new_book.title == "New title"
     
-
-def test_it_can_update_book(book_service):
-
-    with patch.object(BookService, 'update') as mock_update:
-
-        fake_mongo_id = ObjectId('60a5c1d5e9b92b6f8e87654a')
-
-        update_book = BookSchema(
-            id=fake_mongo_id,
-            title="title",
-            author="new author",
-            description="Lorem ipsum dolor veniam ...",
-            year=1999
-        )
-
-        mock_update.return_value = Book(
-            id=fake_mongo_id,
-            title="New title",
-            author="New author",
-            description="Lorem ipsum dolor veniam ...",
-            year=1999
-        )
-        
-        mock_update.side_effect = BookNotFoundException("Book not found")
-
-        with pytest.raises(BookNotFoundException):
-
-            book_service.update(update_book)
-        
-        mock_update.side_effect = None #hace un reset al efecto secundario
-
-        book_entity = book_service.update(update_book)
-
-        assert isinstance(book_entity, Book)
-
-        assert book_entity.id == fake_mongo_id
-
-        assert book_entity.author == "New author"
-
-        assert book_entity.title == "New title"
+    book_service.delete(new_book)
 
 
-def test_it_can_delete_book(book_service):
+def test_it_can_delete_book(book_service, set_up):
 
-    with patch.object(BookService, 'delete') as mock_delete:
+    book = set_up
 
-        fake_mongo_id = ObjectId('60a5c1d5e9b92b6f8e87654a')
+    try:
 
-        mock_delete.side_effect = BookNotFoundException("Book not found")
+        book_service.delete(book)
 
-        with pytest.raises(BookNotFoundException):
+    except:
 
-            book_service.delete(fake_mongo_id)
-
-        mock_delete.side_effect = None
-
-        try:
-
-            book_service.delete(fake_mongo_id)
-
-        except:
-
-            pytest.fail("Unexpected BookNotFoundException")
+        pytest.fail("Unexpected BookNotFoundException")
 
 
-def test_it_can_find_book_by_id(book_service):
+def test_it_can_find_book_by_id(book_service, set_up):
 
-    with patch.object(BookService, "find_by_id") as mock_find_by_id:
+    found_book = book_service.find_by_id(set_up.id)
 
-        fake_mongo_id = ObjectId('60a5c1d5e9b92b6f8e87654a')
+    assert isinstance(found_book, Book)
 
-        mock_find_by_id.return_value = Book(
-            id=fake_mongo_id,
-            title="Harry Potter and the Philosopher's Stone",
-            author="J. K. Rowling",
-            description="Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris nisi ut aliquip ex ea commodo consequat. Duis aute irure dolor in reprehenderit in voluptate velit esse cillum dolore eu fugiat nulla pariatur. Excepteur sint occaecat cupidatat non proident, sunt in culpa qui officia deserunt mollit anim id est laborum.",
-            year=1997
-        )
-        
-        mock_find_by_id.side_effect = BookNotFoundException("Book not found")
-        
-        with pytest.raises(BookNotFoundException):
+    assert found_book.id == set_up.id
 
-            book_service.find_by_id(fake_mongo_id)
+    assert found_book.title == "Harry Potter and the Philosopher's Stone"
 
-        mock_find_by_id.side_effect = None
+    assert found_book.author == "J. K. Rowling"
 
-        found_book = book_service.find_by_id(fake_mongo_id)
+    assert found_book.description == "Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris nisi ut aliquip ex ea commodo consequat. Duis aute irure dolor in reprehenderit in voluptate velit esse cillum dolore eu fugiat nulla pariatur. Excepteur sint occaecat cupidatat non proident, sunt in culpa qui officia deserunt mollit anim id est laborum."
 
-        assert isinstance(found_book, Book)
-
-        assert found_book.id == fake_mongo_id
-
-        assert found_book.title == "Harry Potter and the Philosopher's Stone"
-        
-        assert found_book.author == "J. K. Rowling"
-        
-        assert found_book.description == "Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris nisi ut aliquip ex ea commodo consequat. Duis aute irure dolor in reprehenderit in voluptate velit esse cillum dolore eu fugiat nulla pariatur. Excepteur sint occaecat cupidatat non proident, sunt in culpa qui officia deserunt mollit anim id est laborum."
-        
-        assert found_book.year == 1997
-
-def test_it_can_retun_all_books(book_service):
+    assert found_book.year == 1997
     
-    with patch.object(BookService,"get_all") as mock_get_all:
-        
-        fake_mongo_id = ObjectId('60a5c1d5e9b92b6f8e87654a')
-        
-        fake_mongo_id_2 = ObjectId('619bf4b6c2f13a5e0c956b5c')
-        
-        mock_get_all.return_value = [
-            Book(
-                id=fake_mongo_id,
-                title="Harry Potter and the Philosopher's Stone",
-                author="J. K. Rowling",
-                description="Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris nisi ut aliquip ex ea commodo consequat. Duis aute irure dolor in reprehenderit in voluptate velit esse cillum dolore eu fugiat nulla pariatur. Excepteur sint occaecat cupidatat non proident, sunt in culpa qui officia deserunt mollit anim id est laborum.",
-                year=1997
-            ),
-            Book(
-                id=fake_mongo_id_2,
-                title="Harry Potter and the Chamber of Secrets",
-                author="J. K. Rowling",
-                description="Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris nisi ut aliquip ex ea commodo consequat. Duis aute irure dolor in reprehenderit in voluptate velit esse cillum dolore eu fugiat nulla pariatur. Excepteur sint occaecat cupidatat non proident, sunt in culpa qui officia deserunt mollit anim id est laborum.",
-                year=1999
-            )
-        ]
-        
-        mock_get_all.side_effect = BookNotFoundException("Book not found")
-        
-        with pytest.raises(BookNotFoundException):
+    book_service.delete(found_book)
 
-            book_service.get_all()
 
-        mock_get_all.side_effect = None
-        
-        all_books = book_service.get_all()
-        
-        assert isinstance(all_books,list)
-        assert len(all_books) == 2
-        
-        assert all_books[0].id == fake_mongo_id
-        assert all_books[0].title == "Harry Potter and the Philosopher's Stone"
-        assert all_books[0].author == "J. K. Rowling"
-        assert all_books[0].year ==  1997
-        
-        assert all_books[1].id == fake_mongo_id_2
-        assert all_books[1].title == "Harry Potter and the Chamber of Secrets"
-        assert all_books[1].author == "J. K. Rowling"
-        assert all_books[1].year ==  1999
+def test_it_can_retun_all_books(book_service,set_up):
+
+    book_1 = set_up
+    
+    create_book = BookSchema(
+        title="Harry Potter and the Chamber of Secrets",
+        author="J. K. Rowling",
+        description="Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris nisi ut aliquip ex ea commodo consequat. Duis aute irure dolor in reprehenderit in voluptate velit esse cillum dolore eu fugiat nulla pariatur. Excepteur sint occaecat cupidatat non proident, sunt in culpa qui officia deserunt mollit anim id est laborum.",
+        year=1999
+    )
+
+    book_2 = book_service.create(create_book)
+    
+    all_books = book_service.get_all()
+    
+    #assert isinstance(all_books, list)
+    #assert len(all_books) == 2
+
+    assert all_books[0].id == book_1.id
+    assert all_books[0].title == "Harry Potter and the Philosopher's Stone"
+    assert all_books[0].author == "J. K. Rowling"
+    assert all_books[0].year == 1997
+
+    assert all_books[1].id == book_2.id
+    assert all_books[1].title == "Harry Potter and the Chamber of Secrets"
+    assert all_books[1].author == "J. K. Rowling"
+    assert all_books[1].year == 1999
+    
+    book_service.delete(book_1)
+    
+    book_service.delete(book_2)

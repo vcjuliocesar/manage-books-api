@@ -1,4 +1,6 @@
 from bson import ObjectId
+from typing import List
+from fastapi import Depends
 from src.infrastructure.repositories.book_repository import BookRepository
 from src.infrastructure.schemas.book_schema import BookSchema
 from src.infrastructure.exceptions.book_already_exists_exception import BookAlreadyExistsException
@@ -7,9 +9,9 @@ from src.domain.models.book_entity import BookEntity as Book
 
 class BookService:
     
-    def __init__(self) -> None:
+    def __init__(self,repository:BookRepository = Depends()) -> None:
         
-        self.repository = BookRepository()
+        self.repository = repository
         
     def create(self,book:BookSchema) -> Book:
         
@@ -25,7 +27,7 @@ class BookService:
         
         return self.repository.find_one(criteria)
     
-    def find_by_id(self,id_book:ObjectId) -> Book:
+    def find_by_id(self,id_book:str) -> Book:
         
         book = self.repository.find_by_id(id_book)
         
@@ -61,11 +63,11 @@ class BookService:
         
         return self.repository.delete(book)
     
-    def get_all(self) -> list[Book]:
+    def get_all(self) -> List[Book]:
         
         books = self.repository.get_all()
         
-        if len(books) == 0:
+        if not books:
             
             raise BookNotFoundException()
             
