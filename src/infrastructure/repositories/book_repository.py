@@ -1,13 +1,15 @@
 from bson import ObjectId
+from typing import List
+from fastapi import Depends
 from src.domain.models.book_entity import BookEntity as Book
 from src.infrastructure.repositories.interfaces.book_interface import BookInterface
 from src.infrastructure.configs.database import db_connect
 
 class BookRepository(BookInterface):
     
-    def __init__(self) -> None:
+    def __init__(self,db=Depends(db_connect)) -> None:
         
-        self.db = db_connect()
+        self.db = db
     
     def create(self, book: Book) -> Book:
         
@@ -15,9 +17,9 @@ class BookRepository(BookInterface):
         
         return book
     
-    def find_by_id(self,id_book:ObjectId) -> Book:
+    def find_by_id(self,id_book:str) -> Book:
         
-        return Book.objects.get(id=id_book).first()
+        return Book.objects(id=id_book).first()
     
     def find_one(self,criteria: dict) -> Book:
         
@@ -31,6 +33,6 @@ class BookRepository(BookInterface):
         
         return book.delete()
     
-    def get_all(self) -> list[Book]:
+    def get_all(self) -> List[Book]:
         
-        return list[Book.objects().all()] 
+        return Book.objects().all() 
