@@ -1,3 +1,4 @@
+from uuid import UUID
 from bson import ObjectId
 from pydantic import BaseModel,Field
 from typing import Optional,Union
@@ -15,8 +16,8 @@ class BookPostRequest(BaseModel):
     
 class BookSchema(BookPostRequest):
     
-    id : Optional[Union[OID,str]] = Field(default=None,alias="_id")
-    
+    #id : Optional[Union[OID,UUID,str]] = Field(default=None,alias="_id")
+    id : Optional[Union[OID,UUID,str]] = Field(default=None,alias="_id")
     class ConfigDict:
         populate_by_name = True
     #     #populate_by_field_name = True #permite que se usen campos alternativos al crear instancias de la clase
