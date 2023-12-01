@@ -56,9 +56,11 @@ class BookService:
         
         return self.repository.update(book)
         
-    def delete(self,book:Book) -> None:
+    def delete(self,id_book:ObjectId) -> None:
         
-        if not self.find_by_id(book.id):
+        book = self.repository.find_by_id(id_book)
+        
+        if not book:
             
             raise BookNotFoundException()
         
