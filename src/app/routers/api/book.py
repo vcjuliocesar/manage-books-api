@@ -90,7 +90,7 @@ async def delete(id_book: str, use_case: DeleteBookUseCase = Depends()):
         return JSONResponse(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, content={"message": f"{str(error)}"})
 
 
-@book_router.get("/books",status_code=status.HTTP_200_OK)
+@book_router.get("/books",response_model=List[BookSchema],status_code=status.HTTP_200_OK)
 async def get_all(use_case: GetAllBooksUseCase = Depends()):
 
     try:
