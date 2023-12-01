@@ -38,9 +38,9 @@ class BookService:
         
         return book.to_json()
     
-    def update(self,new_book:BookSchema) -> Book:
+    def update(self,id:ObjectId,new_book:BookSchema) -> Book:
         
-        book = self.find_by_id(new_book.id)
+        book = self.repository.find_by_id(id)
         
         if not book:
             
