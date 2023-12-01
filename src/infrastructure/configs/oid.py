@@ -11,10 +11,14 @@ class OID(str):
     @classmethod
     def validate(cls, v):
 
-        try:
+        if not isinstance(v, ObjectId):
+            raise ValueError('Not a valid ObjectId')
+        return str(v)
 
-            return ObjectId(str(v))
-
-        except InvalidDocument:
-
-            raise ValueError("Not a valid ObjectId")
+    # @classmethod
+    # def __get_pydantic_core_schema__(cls):
+    #     return {
+    #         "type": "string",  # Ejemplo de cómo podrías definir el esquema JSON
+    #         "format": "objectid"
+    #         # Puedes ajustar este esquema para que se adapte a tus necesidades
+    #     }
