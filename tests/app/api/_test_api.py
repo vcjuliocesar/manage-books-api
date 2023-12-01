@@ -38,7 +38,7 @@ def set_up(client:TestClient):
      pass
     
 
-def test_it_can_create_book(client:TestClient,book_service):
+def test_it_can_create_a_book(client:TestClient,book_service):
     
     response = client.post("/api/v1/books",json={
         "title":"Harry Potter and the Philosopher's Stone",
