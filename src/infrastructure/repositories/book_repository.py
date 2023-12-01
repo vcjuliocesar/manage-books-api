@@ -17,7 +17,7 @@ class BookRepository(BookInterface):
         
         return book
     
-    def find_by_id(self,id_book:str) -> Book:
+    def find_by_id(self,id_book:ObjectId) -> Book:
         
         return Book.objects(id=id_book).first()
     
