@@ -33,6 +33,6 @@ class BookRepository(BookInterface):
         
         return book.delete()
     
-    def get_all(self) -> List[Book]:
+    def get_all(self) -> list:
         
         return Book.objects().all() 

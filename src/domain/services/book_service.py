@@ -73,5 +73,5 @@ class BookService:
         if not books:
             
             raise BookNotFoundException()
-            
-        return books
+        
+        return [json.loads(book.to_json()) for book in books]
