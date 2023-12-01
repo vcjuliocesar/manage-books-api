@@ -1,3 +1,4 @@
+import json
 from bson import ObjectId
 from typing import List
 from fastapi import Depends
@@ -27,7 +28,7 @@ class BookService:
         
         return self.repository.find_one(criteria)
     
-    def find_by_id(self,id_book:str) -> Book:
+    def find_by_id(self,id_book:ObjectId) -> Book:
         
         book = self.repository.find_by_id(id_book)
         
@@ -35,11 +36,11 @@ class BookService:
             
             raise BookNotFoundException()
         
-        return book
+        return book.to_json()
     
-    def update(self,new_book:BookSchema) -> Book:
+    def update(self,id:ObjectId,new_book:BookSchema) -> Book:
         
-        book = self.find_by_id(new_book.id)
+        book = self.repository.find_by_id(id)
         
         if not book:
             
@@ -55,9 +56,11 @@ class BookService:
         
         return self.repository.update(book)
         
-    def delete(self,book:Book) -> None:
+    def delete(self,id_book:ObjectId) -> None:
         
-        if not self.find_by_id(book.id):
+        book = self.repository.find_by_id(id_book)
+        
+        if not book:
             
             raise BookNotFoundException()
         
@@ -70,5 +73,5 @@ class BookService:
         if not books:
             
             raise BookNotFoundException()
-            
-        return books
+        
+        return [json.loads(book.to_json()) for book in books]

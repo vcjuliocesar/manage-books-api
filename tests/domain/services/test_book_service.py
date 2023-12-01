@@ -1,5 +1,4 @@
 import pytest
-from typing import List
 from bson import ObjectId
 from mongoengine import disconnect_all
 from src.domain.services.book_service import BookService
@@ -62,7 +61,7 @@ def test_it_return_an_exception_if_book_already_exists(book_service, set_up):
 
         book_service.create(create_book)
 
-    book_service.delete(book)
+    book_service.delete(book.id)
 
 
 def test_it_can_create_book(book_service, set_up, caplog):
@@ -78,7 +77,7 @@ def test_it_can_create_book(book_service, set_up, caplog):
 
     assert book.author == "J. K. Rowling"
 
-    book_service.delete(book)
+    book_service.delete(book.id)
 
     captured_logs = caplog.text
     print(captured_logs)
@@ -88,23 +87,24 @@ def test_it_can_update_book(book_service, set_up):
 
     book_entity = set_up
 
-    book = book_service.find_by_id(book_entity.id)
+    book = BookSchema(
+        title="New title",
+        author="New author",
+        description="Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris nisi ut aliquip ex ea commodo consequat. Duis aute irure dolor in reprehenderit in voluptate velit esse cillum dolore eu fugiat nulla pariatur. Excepteur sint occaecat cupidatat non proident, sunt in culpa qui officia deserunt mollit anim id est laborum.",
+        year=1997
+    )
 
-    book.author = "New author"
-
-    book.title = "New title"
-
-    new_book = book_service.update(book)
+    new_book = book_service.update(book_entity.id, book)
 
     assert isinstance(new_book, Book)
 
-    assert new_book.id == book.id
+    assert new_book.id == book_entity.id
 
     assert new_book.author == "New author"
 
     assert new_book.title == "New title"
-    
-    book_service.delete(new_book)
+
+    book_service.delete(new_book.id)
 
 
 def test_it_can_delete_book(book_service, set_up):
@@ -113,7 +113,7 @@ def test_it_can_delete_book(book_service, set_up):
 
     try:
 
-        book_service.delete(book)
+        book_service.delete(book.id)
 
     except:
 
@@ -122,7 +122,9 @@ def test_it_can_delete_book(book_service, set_up):
 
 def test_it_can_find_book_by_id(book_service, set_up):
 
-    found_book = book_service.find_by_id(set_up.id)
+    book_json = book_service.find_by_id(set_up.id)
+    
+    found_book = Book.from_json(book_json)
 
     assert isinstance(found_book, Book)
 
@@ -135,14 +137,14 @@ def test_it_can_find_book_by_id(book_service, set_up):
     assert found_book.description == "Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris nisi ut aliquip ex ea commodo consequat. Duis aute irure dolor in reprehenderit in voluptate velit esse cillum dolore eu fugiat nulla pariatur. Excepteur sint occaecat cupidatat non proident, sunt in culpa qui officia deserunt mollit anim id est laborum."
 
     assert found_book.year == 1997
-    
-    book_service.delete(found_book)
+
+    book_service.delete(found_book.id)
 
 
-def test_it_can_retun_all_books(book_service,set_up):
+def test_it_can_retun_all_books(book_service, set_up):
 
     book_1 = set_up
-    
+
     create_book = BookSchema(
         title="Harry Potter and the Chamber of Secrets",
         author="J. K. Rowling",
@@ -151,22 +153,22 @@ def test_it_can_retun_all_books(book_service,set_up):
     )
 
     book_2 = book_service.create(create_book)
-    
+
     all_books = book_service.get_all()
-    
-    #assert isinstance(all_books, list)
-    #assert len(all_books) == 2
+     
+    assert isinstance(all_books, list)
+    assert len(all_books) == 2
 
-    assert all_books[0].id == book_1.id
-    assert all_books[0].title == "Harry Potter and the Philosopher's Stone"
-    assert all_books[0].author == "J. K. Rowling"
-    assert all_books[0].year == 1997
+    assert ObjectId(all_books[0]['_id']['$oid']) == book_1.id
+    assert all_books[0]['title'] == "Harry Potter and the Philosopher's Stone"
+    assert all_books[0]['author'] == "J. K. Rowling"
+    assert all_books[0]['year'] == 1997
 
-    assert all_books[1].id == book_2.id
-    assert all_books[1].title == "Harry Potter and the Chamber of Secrets"
-    assert all_books[1].author == "J. K. Rowling"
-    assert all_books[1].year == 1999
-    
-    book_service.delete(book_1)
-    
-    book_service.delete(book_2)
+    assert ObjectId(all_books[1]['_id']['$oid']) == book_2.id
+    assert all_books[1]['title'] == "Harry Potter and the Chamber of Secrets"
+    assert all_books[1]['author'] == "J. K. Rowling"
+    assert all_books[1]['year'] == 1999
+
+    book_service.delete(book_1.id)
+
+    book_service.delete(book_2.id)

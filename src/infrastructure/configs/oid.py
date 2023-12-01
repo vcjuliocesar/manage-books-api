@@ -2,6 +2,7 @@ from bson import InvalidDocument, ObjectId
 
 
 class OID(str):
+    campo_personalizado: str
     # Este método de clase especial se utiliza para proporcionar validadores para el campo OID. Específicamente, se usa en conjunción con Pydantic para validar datos.
     @classmethod
     def __get_validators__(cls):
@@ -11,10 +12,7 @@ class OID(str):
     @classmethod
     def validate(cls, v):
 
-        try:
-
-            return ObjectId(str(v))
-
-        except InvalidDocument:
-
-            raise ValueError("Not a valid ObjectId")
+        if not isinstance(v, ObjectId):
+            raise ValueError('Not a valid ObjectId')
+        return str(v)
+    
