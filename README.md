@@ -13,6 +13,7 @@ ___
 
  ## Getting Started
 
+
 Follow these steps to set up and run the project on your local machine:
 
 ### Clone the repository
@@ -24,6 +25,22 @@ git clone git@github.com:vcjuliocesar/manage-books-api
 **Create enviroment file:** rename .env.example by .env
 
 add your enviroment variables
+
+## Docker
+
+It is important that you have docker installed on your computer
+
+```docker
+docker compose build
+
+docker compose up
+```
+
+Once the project is up and running, you can access it through your browser or API client.
+
+**Default: [http://127.0.0.1:8000](http://127.0.0.1:8000)**
+
+If you prefer do not use docker follow these steps
 
 It is important that you have python and pip installed on your computer
 
