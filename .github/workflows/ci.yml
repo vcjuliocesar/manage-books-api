@@ -27,7 +27,7 @@ jobs:
 
         steps:
             - name: Checkout
-              uses: actions/setup-python@v4
+              uses: actions/checkout@v4
             
             - name: Build Docker compose
               run: docker compose build
