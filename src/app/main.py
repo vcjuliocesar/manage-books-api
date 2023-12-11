@@ -19,3 +19,5 @@ app.add_middleware(ErrorHandler)
 app.include_router(book_router)
 
 init()
+
+print("Pr no activity")
