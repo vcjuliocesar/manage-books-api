@@ -10,7 +10,17 @@ services:
       - .:/app
     ports:
       - '8000:8000'
-    command: uvicorn src.app.main:app --host 0.0.0.0 --port 8000 --reload
+    command: bash -c "pytest tests || { echo 'Tests failed' && exit 1; } && uvicorn src.app.main:app --host 0.0.0.0 --port 8000 --reload"
+    environment:
+      API_VERSION: ${API_VERSION}
+      APP_NAME: ${APP_NAME}
+      APP_DESCRIPTION: ${APP_DESCRIPTION}
+      DATABASE_ENGINE: ${DATABASE_ENGINE}
+      DATABASE_NAME: ${DATABASE_NAME}
+      DATABASE_HOST: ${DATABASE_HOST}
+      DATABASE_PORT: ${DATABASE_PORT}
+      DATABASE_USER: ${DATABASE_USER}
+      DATABASE_PASSWORD: ${DATABASE_PASSWORD}
 
   mongodb:
     image: mongo
