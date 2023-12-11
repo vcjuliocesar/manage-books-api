@@ -2,7 +2,10 @@ name: "CD-test flow"
 
 run-name: "cd-test flow"
 
-on: [push,pull_request]
+on:
+  push:
+    branches:
+      - main
 
 jobs:
 
