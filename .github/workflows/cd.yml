@@ -1,15 +1,26 @@
 name: "CD-test flow"
 
-run-name: "CD-test flow"
+run-name: "cd-test flow"
 
 on: [push,pull_request]
 
 jobs:
 
-    doker:
+    docker:
 
         runs-on: ubuntu-latest
 
+        env:
+            API_VERSION: ${{vars.BOOK_API_API_VERSION}}
+            APP_DESCRIPTION: ${{vars.BOOK_API_APP_DESCRIPTION}}
+            APP_NAME: ${{vars.BOOK_API_APP_NAME}}
+            DATABASE_ENGINE: ${{vars.BOOK_API_DATABASE_ENGINE}}
+            DATABASE_HOST: ${{vars.BOOK_API_DATABASE_HOST}}
+            DATABASE_NAME: ${{vars.BOOK_API_DATABASE_NAME}}
+            DATABASE_PORT: ${{vars.BOOK_API_DATABASE_PORT}}
+            DATABASE_USER: ${{vars.BOOK_API_DATABASE_USER}}
+            DATABASE_PASSWORD: ${{secrets.BOOK_API_DATABASE_PASSWORD}}
+        
         steps:
             - name: Checkout
               uses: actions/checkout@v4
