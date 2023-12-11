@@ -1,0 +1,43 @@
+name: "CD-test flow"
+
+run-name: "cd-test flow"
+
+on: [push,pull_request]
+
+jobs:
+
+    docker:
+
+        runs-on: ubuntu-latest
+
+        env:
+            API_VERSION: ${{vars.BOOK_API_API_VERSION}}
+            APP_DESCRIPTION: ${{vars.BOOK_API_APP_DESCRIPTION}}
+            APP_NAME: ${{vars.BOOK_API_APP_NAME}}
+            DATABASE_ENGINE: ${{vars.BOOK_API_DATABASE_ENGINE}}
+            DATABASE_HOST: ${{vars.BOOK_API_DATABASE_HOST}}
+            DATABASE_NAME: ${{vars.BOOK_API_DATABASE_NAME}}
+            DATABASE_PORT: ${{vars.BOOK_API_DATABASE_PORT}}
+            DATABASE_USER: ${{vars.BOOK_API_DATABASE_USER}}
+            DATABASE_PASSWORD: ${{secrets.BOOK_API_DATABASE_PASSWORD}}
+        
+        steps:
+            - name: Checkout
+              uses: actions/checkout@v4
+            
+            - name: Set up QEMU
+              uses: docker/setup-qemu-action@v3
+
+            - name: Set up Docker Buildx
+              uses: docker/setup-buildx-action@v3
+
+            - name: Login to Docker Hub
+              uses: docker/login-action@v3
+              with:
+                username: ${{ secrets.DOCKERHUB_USERNAME }}
+                password: ${{ secrets.DOCKERHUB_TOKEN }}
+           
+            - name: Build Docker compose
+              run: | 
+                docker compose build
+                docker compose push
