@@ -1,0 +1,77 @@
+name: "CI-test flow"
+
+run-name: "ci-test flow"
+
+on: [push,pull_request]
+
+jobs:
+    build-python:
+        
+        runs-on: ubuntu-latest
+        
+        steps:
+            - name: Checkout
+              uses: actions/checkout@v4
+            
+            - name: Set up python
+              uses: actions/setup-python@v4
+              with:
+                python-version: 3.10.13
+            
+            - name: Install dependencies
+              run: pip install --no-cache-dir -r requirements.txt
+    
+    build-docker:
+
+        runs-on: ubuntu-latest
+
+        steps:
+            - name: Checkout
+              uses: actions/checkout@v4
+            
+            - name: Build Docker compose
+              run: docker compose build
+    
+    unit-test:
+
+      runs-on: ubuntu-latest
+      env:
+        API_VERSION: ${{vars.BOOK_API_API_VERSION}}
+        APP_DESCRIPTION: ${{vars.BOOK_API_APP_DESCRIPTION}}
+        APP_NAME: ${{vars.BOOK_API_APP_NAME}}
+        DATABASE_ENGINE: ${{vars.BOOK_API_DATABASE_ENGINE}}
+        DATABASE_HOST: ${{vars.BOOK_API_DATABASE_HOST}}
+        DATABASE_NAME: ${{vars.BOOK_API_DATABASE_NAME}}
+        DATABASE_PORT: ${{vars.BOOK_API_DATABASE_PORT}}
+        DATABASE_USER: ${{vars.BOOK_API_DATABASE_USER}}
+        DATABASE_PASSWORD: ${{secrets.BOOK_API_DATABASE_PASSWORD}}
+
+      services:
+        mongodb:
+          image: mongo:4.4.27-rc0
+          ports:
+            - 27017:${{vars.BOOK_API_DATABASE_PORT}}
+          options: --health-cmd="mongo --eval=\"printjson(db.serverStatus())\"" --health-interval=10s --health-timeout=5s --health-retries=3
+          env:
+            MONGO_INITDB_ROOT_USERNAME: ${{vars.BOOK_API_DATABASE_USER}}
+            MONGO_INITDB_ROOT_PASSWORD: ${{secrets.BOOK_API_DATABASE_PASSWORD}}
+            DATABASE_PORT: ${{vars.BOOK_API_DATABASE_PORT}}
+            DATABASE_NAME: ${{vars.BOOK_API_DATABASE_NAME}}
+            DATABASE_HOST: ${{vars.BOOK_API_DATABASE_HOST}}
+
+      steps:
+
+        - name: Checkout
+          uses: actions/checkout@v4
+        
+        - name: Set up python
+          uses: actions/setup-python@v4
+          with:
+            python-version: 3.10.13
+        
+        - name: Install dependencies
+          run: pip install --no-cache-dir -r requirements.txt
+
+        - name: Run test
+          run: pytest tests
+        
