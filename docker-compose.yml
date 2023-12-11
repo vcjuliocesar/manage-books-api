@@ -4,6 +4,8 @@ services:
   api:
     build: 
       context: .
+      dockerfile: Dockerfile
+    image: juliuzdoe/manage-books-api:0.1.0
     depends_on:
       - mongodb
     volumes:
