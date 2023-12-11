@@ -1,0 +1,18 @@
+name: "Closed Issues and PRs without activity"
+
+run-name: "without activity"
+
+on: 
+    schedule:
+        - cron: '30 1 * * *'
+jobs:
+    no_activity:
+        runs-on: ubuntu-latest
+        steps:
+            - name: Close Stale Issues and PRs
+              uses: actions/stale@v9
+              with:
+                stale-issue-message: 'Este issue no ha recibido actividad en más de 60 días. Si no se registra actividad, será cerrado.'
+                stale-pr-message: 'Este Pull Request no ha recibido actividad en más de 60 días. Si no se registra actividad, será cerrado.'
+                stale-issue-label: 'no activity'
+                stale-pr-label: 'no activity'
